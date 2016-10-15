@@ -1,7 +1,7 @@
 /**
  * Created by MIC on 2016-10-10.
  */
-public interface Graph<E, V> {
+public interface Graph<V, E> {
     void addVertex(V vertex);
     void removeVertex(V vertex);
     void addEdge(E edge, V from, V to, boolean directional);
