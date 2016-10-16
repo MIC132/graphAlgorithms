@@ -1,39 +1,53 @@
+import java.lang.reflect.Array;
+
 /**
  * Created by MIC on 2016-10-10.
  */
 public class MatrixGraph<V, E> implements Graph<V, E>{
-    V[] vertices = (V[]) new Object[0];
-    E[][] edges = (E[][]) new Object[0][0];
+    private V[] vertices;
+    private E[][] edges;
+
+    private final Class<V> vertexClass;
+    private final Class<E> edgeClass;
+
+
+    public MatrixGraph(Class<V> vertexClass, Class<E> edgeClass) {
+        this.vertexClass = vertexClass;
+        this.edgeClass = edgeClass;
+        vertices = getArray(vertexClass, 0);
+        edges = get2DArray(edgeClass, 0, 0);
+    }
 
     @Override
-    public void addVertex(V vertex) {
-        if(indexOfVertex(vertex, vertices) != -1) return;
+    public boolean addVertex(V vertex) {
+        if(indexOfVertex(vertex, vertices) != -1) return false;
 
-        V[] tempVertices = (V[]) new Object[vertices.length+1];
+        V[] tempVertices = getArray(vertexClass, vertices.length + 1);
+
         System.arraycopy(vertices,0,tempVertices,0,vertices.length);
         tempVertices[vertices.length] = vertex;
 
-
-        E[][] tempEdges = (E[][]) new Object[vertices.length+1][vertices.length+1];
+        E[][] tempEdges = get2DArray(edgeClass, vertices.length+1, vertices.length+1);
         for(int i=0; i<vertices.length; i++){
             System.arraycopy(edges[i],0, tempEdges[i], 0, vertices.length);
         }
 
         edges = tempEdges;
         vertices = tempVertices;
+        return true;
     }
 
     @Override
-    public void removeVertex(V vertex) {
+    public boolean removeVertex(V vertex) {
         int position = indexOfVertex(vertex,vertices);
 
-        if(position == -1) return;
+        if(position == -1) return false;
 
-        V[] tempVertices = (V[]) new Object[vertices.length-1];
+        V[] tempVertices = getArray(vertexClass, vertices.length - 1);
         System.arraycopy(vertices,0,tempVertices,0,position);
         System.arraycopy(vertices,position + 1,tempVertices,position,vertices.length - (position + 1));
 
-        E[][] tempEdges = (E[][]) new Object[vertices.length-1][vertices.length-1];
+        E[][] tempEdges = get2DArray(edgeClass, vertices.length-1, vertices.length-1);
         for(int i=0; i<position; i++){
             System.arraycopy(edges[i],0,tempEdges[i],0,position);
             System.arraycopy(edges[i],position + 1,tempEdges[i],position,vertices.length - (position + 1));
@@ -45,10 +59,11 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
 
         edges = tempEdges;
         vertices = tempVertices;
+        return true;
     }
 
     @Override
-    public void addEdge(E edge, V from, V to, boolean directional) {
+    public boolean addEdge(E edge, V from, V to, boolean directional) {
         int posFrom = indexOfVertex(from,vertices);
         int posTo = indexOfVertex(to,vertices);
 
@@ -58,23 +73,30 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
                 edges[posTo][posFrom] = edge;
             }
         }
+
+        return true;
     }
 
     @Override
-    public void removeEdge(E edge) {
+    public boolean removeEdge(E edge) {
+        boolean out = false;
         for(int i = 0; i<vertices.length; i++){
             for (int j = 0; j<vertices.length; j++){
-                if(edges[i][j].equals(edge)) edges[i][j] = null;
+                if(edges[i][j].equals(edge)){
+                    edges[i][j] = null;
+                    out = true;
+                }
             }
         }
+        return out;
     }
 
     @Override
     public V[] getAdjacentVertices(V vertex) {
         int position = indexOfVertex(vertex, vertices);
-        if(position == -1) return (V[]) new Object[0];
+        if(position == -1) return getArray(vertexClass, 0);
 
-        V[] temp = (V[]) new Object[vertices.length];
+        V[] temp = getArray(vertexClass, vertices.length);
 
         int j = 0;
         for(int i = 0; i<vertices.length; i++){
@@ -84,7 +106,7 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
             }
         }
 
-        V[] result = (V[]) new Object[j];
+        V[] result = getArray(vertexClass, j);
         System.arraycopy(temp,0,result,0,j);
         return result;
     }
@@ -92,9 +114,9 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
     @Override
     public E[] getAdjacentEdges(V vertex) {
         int position = indexOfVertex(vertex, vertices);
-        if(position == -1) return (E[]) new Object[0];
+        if(position == -1) return getArray(edgeClass, 0);
 
-        E[] temp = (E[]) new Object[(vertices.length*(vertices.length-3))/2+vertices.length];
+        E[] temp = getArray(edgeClass, (vertices.length*(vertices.length-3))/2+vertices.length);
 
         int j = 0;
         for(int i = 0; i<vertices.length; i++){
@@ -104,7 +126,7 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
             }
         }
 
-        E[] result = (E[]) new Object[j];
+        E[] result = getArray(edgeClass, j);
         System.arraycopy(temp,0,result,0,j);
         return result;
     }
@@ -167,5 +189,25 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
             if(array[i].equals(vertex)) output = i;
         }
         return output;
+    }
+
+    private <T> T[] getArray(Class<T> clazz, int size) {
+        @SuppressWarnings("unchecked")
+        T[] arr = (T[]) Array.newInstance(clazz, size);
+
+        return arr;
+    }
+
+    private <T> T[][] get2DArray(Class<T> clazz, int size1, int size2){
+        T[][] temp = getArray(getArrayClass(clazz), size1);
+        for(int i = 0; i < size1; i++){
+            temp[i] = getArray(clazz, size2);
+        }
+        return temp;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> Class<? extends T[]> getArrayClass(Class<T> clazz) {
+        return (Class<? extends T[]>) Array.newInstance(clazz, 0).getClass();
     }
 }
