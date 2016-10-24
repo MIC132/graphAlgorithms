@@ -19,6 +19,21 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
     }
 
     @Override
+    public V[] getVertices() {
+        return vertices;
+    }
+
+    @Override
+    public Class getVertexClass() {
+        return vertexClass;
+    }
+
+    @Override
+    public Class getEdgeClass() {
+        return edgeClass;
+    }
+
+    @Override
     public boolean addVertex(V vertex) {
         if(indexOfVertex(vertex, vertices) != -1) return false;
 
@@ -89,6 +104,19 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
             }
         }
         return out;
+    }
+
+    @Override
+    public boolean removeEdge(V from, V to, boolean directional) {
+        int fromPos = indexOfVertex(from, vertices);
+        int toPos = indexOfVertex(to, vertices);
+        if(fromPos == -1 || toPos == -1) return false;
+
+        edges[fromPos][toPos] = null;
+        if(!directional){
+            edges[toPos][fromPos] = null;
+        }
+        return true;
     }
 
     @Override
@@ -171,6 +199,14 @@ public class MatrixGraph<V, E> implements Graph<V, E>{
         }
         return false;
 
+    }
+
+    @Override
+    public E getEdge(V from, V to) {
+        int fromPos = indexOfVertex(from, vertices);
+        int toPos = indexOfVertex(to, vertices);
+        if(fromPos == -1 || toPos == -1) return null;
+        return edges[fromPos][toPos];
     }
 
     private boolean existsEdge(E edge){

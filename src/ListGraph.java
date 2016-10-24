@@ -19,6 +19,21 @@ public class ListGraph<V, E> implements Graph<V, E> {
     }
 
     @Override
+    public V[] getVertices() {
+        return vertices;
+    }
+
+    @Override
+    public Class getVertexClass() {
+        return vertexClass;
+    }
+
+    @Override
+    public Class getEdgeClass() {
+        return edgeClass;
+    }
+
+    @Override
     public boolean addVertex(V vertex) {
         if(indexOfVertex(vertex, vertices) != -1) return false;
 
@@ -81,6 +96,25 @@ public class ListGraph<V, E> implements Graph<V, E> {
             node.next.prev = node;
         }
 
+        return true;
+    }
+
+    @Override
+    public boolean removeEdge(V from, V to, boolean directional) {
+        int position = indexOfVertex(from, vertices);
+        if(position == -1 || indexOfVertex(to, vertices) == -1) return false;
+        ListNode node = adjacencyList[position];
+        boolean result = false;
+        while(node != null){
+            if(node.vertex.equals(to)){
+                node.prev.next = node.next;
+                if(node.next != null){
+                    node.next.prev = node.prev;
+                }
+                break;
+            }
+            node = node.next;
+        }
         return true;
     }
 
@@ -169,11 +203,12 @@ public class ListGraph<V, E> implements Graph<V, E> {
                 result = true;
                 break;
             }
+            node = node.next;
         }
         return result;
     }
 
-    private E getEdge(V from, V to){
+    public E getEdge(V from, V to){
         int position = indexOfVertex(from, vertices);
         if(position == -1 || indexOfVertex(to, vertices) == -1) return null;
         ListNode node = adjacencyList[position];
@@ -183,6 +218,7 @@ public class ListGraph<V, E> implements Graph<V, E> {
                 result = (E) node.edge;
                 break;
             }
+            node = node.next;
         }
         return result;
     }
