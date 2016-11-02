@@ -1,5 +1,8 @@
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * Created by MIC on 2016-10-24.
@@ -9,18 +12,24 @@ public class FordFulkerson {
     private FordFulkerson() {}
 
     public static int getMaximumFlow(Graph<Integer, Integer> capacityGraph, int from, int to){
-        Graph<Integer, Integer> flowGraph = new ListGraph<>(Integer.class, Integer.class);
-        Graph<Integer, Integer> residualGraph = new ListGraph<>(Integer.class, Integer.class);
+        //Graph<Integer, Integer> flowGraph = new MatrixGraph<>(Integer.class, Integer.class);
+        Graph<Integer, Integer> residualGraph = new MatrixGraph<>(Integer.class, Integer.class);
         for(Integer i : capacityGraph.getVertices()){
             for (Integer j : capacityGraph.getVertices()){
-                if(!i.equals(j) && capacityGraph.existsEdge(i, j, true)){
-                    flowGraph.addEdge(0, i, j, true);
-                    residualGraph.addEdge(capacityGraph.getEdge(i, j), i, j, true);
+                if (!i.equals(j)) {
+                    //flowGraph.addVertex(i);
+                    //flowGraph.addVertex(j);
+                    //flowGraph.addEdge(0, i, j, true);
+                    residualGraph.addVertex(i);
+                    residualGraph.addVertex(j);
+                    if (capacityGraph.existsEdge(i, j, true)) {
+                        residualGraph.addEdge(capacityGraph.getEdge(i, j), i, j, true);
+                    }
                 }
             }
         }
         int resultFlow = 0;
-        List<Integer> path = bfsPath(residualGraph, from, to);
+        List<Integer> path = dfsPath(residualGraph, from, to);
         while (!path.isEmpty()){
             int minflow = Integer.MAX_VALUE;
             for(int i=0; i<path.size()-1; i++){
@@ -30,18 +39,33 @@ public class FordFulkerson {
                 }
             }
             resultFlow += minflow;
+            //System.out.println("Minflow: "+minflow);
             for(int i=0; i<path.size()-1; i++){
-                int currentFlow = flowGraph.getEdge(path.get(i), path.get(i+1));
-                flowGraph.removeEdge(path.get(i), path.get(i+1), true);
-                flowGraph.addEdge(currentFlow + minflow, path.get(i), path.get(i+1), true);
+                //Integer currentFlow = flowGraph.getEdge(path.get(i), path.get(i+1));
+                //flowGraph.removeEdge(path.get(i), path.get(i+1), true);
+                //flowGraph.addEdge(currentFlow + minflow, path.get(i), path.get(i+1), true);
+                Integer currentFlow = residualGraph.getEdge(path.get(i), path.get(i + 1));
+                //System.out.println("Current flow forward: "+currentFlow);
                 residualGraph.removeEdge(path.get(i), path.get(i+1), true);
                 residualGraph.addEdge(currentFlow - minflow, path.get(i), path.get(i+1), true);
-                currentFlow = flowGraph.getEdge(path.get(i+1), path.get(i));
-                flowGraph.removeEdge(path.get(i+1), path.get(i), true);
-                flowGraph.addEdge(currentFlow - minflow, path.get(i+1), path.get(i), true);
-                residualGraph.removeEdge(path.get(i+1), path.get(i), true);
-                residualGraph.addEdge(currentFlow + minflow, path.get(i+1), path.get(i), true);
+                /*currentFlow = flowGraph.getEdge(path.get(i+1), path.get(i));
+                if(currentFlow != null){
+                    flowGraph.removeEdge(path.get(i+1), path.get(i), true);
+                    flowGraph.addEdge(currentFlow - minflow, path.get(i+1), path.get(i), true);
+                }
+                */
+                currentFlow = residualGraph.getEdge(path.get(i + 1), path.get(i));
+                //System.out.println("Current flow backward: "+currentFlow);
+                if (currentFlow != null) {
+                    residualGraph.removeEdge(path.get(i + 1), path.get(i), true);
+                    residualGraph.addEdge(currentFlow + minflow, path.get(i + 1), path.get(i), true);
+                } else {
+                    residualGraph.addEdge(minflow, path.get(i + 1), path.get(i), true);
+                }
+
             }
+            path = dfsPath(residualGraph, from, to);
+            //System.out.println("New path: "+path);
         }
         /*for(Integer i : flowGraph.getAdjacentVertices(from)){
             flow += flowGraph.getEdge(from, i);
@@ -49,9 +73,9 @@ public class FordFulkerson {
         return resultFlow;
     }
 
-    public static List<Integer> bfsPath(Graph<Integer, Integer> graph, Integer from, Integer to){
-        Queue<List<Integer>> paths = new LinkedList<>();
-        List<Integer> start = new LinkedList<>();
+    private static List<Integer> bfsPath(Graph<Integer, Integer> graph, Integer from, Integer to) {
+        Queue<List<Integer>> paths = new ArrayDeque<>();
+        List<Integer> start = new ArrayList<>();
         start.add(from);
         paths.add(start);
         while (!paths.isEmpty()){
@@ -61,14 +85,41 @@ public class FordFulkerson {
                 return path;
             }
             for(Integer i : graph.getAdjacentVertices(lastNode)){
-                List<Integer> newPath = new LinkedList<>(path);
-                newPath.add(i);
-                paths.add(newPath);
+                if (!path.contains(i) && graph.getEdge(lastNode, i) > 0) {
+                    List<Integer> newPath = new ArrayList<>(path);
+                    newPath.add(i);
+                    paths.add(newPath);
+                }
             }
         }
-        return new LinkedList<>();
+        return new ArrayList<>();
     }
 
+    private static List<Integer> dfsPath(Graph<Integer, Integer> graph, Integer from, Integer to) {
+        return dfsPathInternal(graph, from, to, new ArrayList<>());
+    }
+
+    private static List<Integer> dfsPathInternal(Graph<Integer, Integer> graph, Integer from, Integer to, List<Integer> visited) {
+        visited.add(from);
+        List<Integer> result = new ArrayList<>();
+        for (Integer i : graph.getAdjacentVertices(from)) {
+            if (!visited.contains(i) && graph.getEdge(from, i) > 0) {
+                if (i.equals(to)) {
+                    result.add(from);
+                    result.add(i);
+                    break;
+                } else {
+                    List<Integer> recursionResult = dfsPathInternal(graph, i, to, visited);
+                    if (!recursionResult.isEmpty()) {
+                        result.add(from);
+                        result.addAll(recursionResult);
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
 
     private static <V> int indexOfVertex(V vertex, V[] array){
         int output = -1;

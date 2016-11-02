@@ -101,14 +101,26 @@ public class ListGraph<V, E> implements Graph<V, E> {
 
     @Override
     public boolean removeEdge(V from, V to, boolean directional) {
+        boolean result = removeEdge(from, to);
+        if (!directional) {
+            removeEdge(to, from);
+        }
+        return result;
+    }
+
+    private boolean removeEdge(V from, V to) {
         int position = indexOfVertex(from, vertices);
-        if(position == -1 || indexOfVertex(to, vertices) == -1) return false;
+        if (position == -1 || indexOfVertex(to, vertices) == -1) return false;
         ListNode node = adjacencyList[position];
         boolean result = false;
-        while(node != null){
-            if(node.vertex.equals(to)){
-                node.prev.next = node.next;
-                if(node.next != null){
+        while (node != null) {
+            if (node.vertex.equals(to)) {
+                if (node.prev != null) {
+                    node.prev.next = node.next;
+                } else {
+                    adjacencyList[position] = node.next;
+                }
+                if (node.next != null) {
                     node.next.prev = node.prev;
                 }
                 break;

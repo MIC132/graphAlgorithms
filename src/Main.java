@@ -13,7 +13,7 @@ public class Main {
     static final Pattern p = Pattern.compile("(\\d*);\\s*(\\d*);\\s*(\\d*).*");
 
     public static void main(String[] args) throws FileNotFoundException {
-        Graph<Integer, Integer> graph = new ListGraph<>(Integer.class, Integer.class);
+        Graph<Integer, Integer> graph = new MatrixGraph<>(Integer.class, Integer.class);
 
         Scanner s = new Scanner(new BufferedReader(new FileReader(new File("flow.txt"))));
         while (s.hasNextLine()){
