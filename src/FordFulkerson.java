@@ -39,7 +39,7 @@ public class FordFulkerson {
                 }
             }
             resultFlow += minflow;
-            //System.out.println("Minflow: "+minflow);
+            System.out.println("Minflow: "+resultFlow);
             for(int i=0; i<path.size()-1; i++){
                 //Integer currentFlow = flowGraph.getEdge(path.get(i), path.get(i+1));
                 //flowGraph.removeEdge(path.get(i), path.get(i+1), true);
